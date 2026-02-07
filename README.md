@@ -1,6 +1,6 @@
 # BREAD (Bread Proxy)
 
-Chrome-like, bread-themed web proxy UI powered by Scramjet + BareMux, -- now becom ULTRAVIOLET not scramjet -- gated per-device via keys (one key = one device; first use binds it).
+Chrome-like, bread-themed web proxy UI powered by Scramjet + BareMux, -- now become ULTRAVIOLET not scramjet -- gated per-device via keys (one key = one device; first use binds it).
 
 ## Quick start
 
