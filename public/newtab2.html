@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>New Tab — BREAD</title>
+    <link rel="stylesheet" href="/css/style.css?v=2026-02-06-6" />
+    <style>
+      body {
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        margin: 0;
+        background: transparent;
+      }
+      .newtab {
+        width: min(980px, 100%);
+        padding: 22px;
+      }
+      .newtab-card {
+        background: rgba(26, 20, 16, 0.72);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 18px;
+        padding: 18px;
+        box-shadow: 0 18px 56px rgba(0, 0, 0, 0.48);
+        backdrop-filter: blur(14px);
+      }
+      .newtab-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 12px;
+      }
+      .newtab-title {
+        margin: 0;
+        font-size: 16px;
+        letter-spacing: -0.01em;
+      }
+      .newtab-sub {
+        margin: 6px 0 0;
+        color: rgba(245, 236, 216, 0.75);
+        font-size: 13px;
+        line-height: 1.55;
+      }
+      .hint {
+        margin: 10px 0 0;
+        color: rgba(245, 236, 216, 0.65);
+        font-size: 12px;
+        line-height: 1.55;
+      }
+      .history {
+        margin-top: 14px;
+      }
+      .history-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 10px;
+      }
+      .history-title {
+        margin: 0;
+        font-size: 12px;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: rgba(245, 236, 216, 0.75);
+      }
+      .history-list {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+      .history-item {
+        width: 100%;
+        text-align: left;
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(0, 0, 0, 0.16);
+        color: rgba(245, 236, 216, 0.92);
+        border-radius: 14px;
+        padding: 12px 12px;
+        cursor: pointer;
+      }
+      .history-item:hover {
+        border-color: rgba(200, 155, 60, 0.36);
+        background: rgba(200, 155, 60, 0.08);
+      }
+      .history-item-title {
+        font-weight: 800;
+        font-size: 13px;
+        line-height: 1.25;
+      }
+      .history-item-sub {
+        margin-top: 4px;
+        font-size: 12px;
+        color: rgba(245, 236, 216, 0.6);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .btn {
+        appearance: none;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(0, 0, 0, 0.18);
+        color: rgba(245, 236, 216, 0.9);
+        padding: 8px 10px;
+        border-radius: 12px;
+        cursor: pointer;
+        font-weight: 800;
+        font-size: 12px;
+      }
+      .btn:hover {
+        border-color: rgba(200, 155, 60, 0.36);
+        background: rgba(200, 155, 60, 0.08);
+      }
+    </style>
+  </head>
+  <body>
+    <main class="newtab">
+      <section class="newtab-card" aria-label="New tab">
+        <div class="newtab-top">
+          <div>
+            <h1 class="newtab-title">New Tab</h1>
+            <p class="newtab-sub">Type a URL or search in the address bar to start browsing.</p>
+          </div>
+          <button type="button" class="btn" id="clearHistoryBtn" title="Clear browsing history">Clear history</button>
+        </div>
+        <p class="hint" id="ipHint"></p>
+        <div class="history">
+          <div class="history-head">
+            <h2 class="history-title">Recent</h2>
+          </div>
+          <div class="history-list" id="historyList"></div>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      (function () {
+        const HISTORY_KEY = 'bread_history';
+        const MAX_HISTORY = 500;
+
+        function getDeviceIdSafe() {
+          try {
+            return window.parent && window.parent.BreadAuth && typeof window.parent.BreadAuth.getDeviceId === 'function'
+              ? window.parent.BreadAuth.getDeviceId()
+              : 'anon';
+          } catch (_) {
+            return 'anon';
+          }
+        }
+
+        function scopedKey(base) {
+          return base + '_' + getDeviceIdSafe();
+        }
+
+        function escapeHtml(s) {
+          const div = document.createElement('div');
+          div.textContent = String(s ?? '');
+          return div.innerHTML;
+        }
+
+        function loadHistory() {
+          try {
+            const raw = localStorage.getItem(scopedKey(HISTORY_KEY));
+            if (!raw) return [];
+            const parsed = JSON.parse(raw);
+            return Array.isArray(parsed) ? parsed : [];
+          } catch (_) {
+            return [];
+          }
+        }
+
+        function saveHistory(history) {
+          try {
+            localStorage.setItem(scopedKey(HISTORY_KEY), JSON.stringify(history.slice(0, MAX_HISTORY)));
+          } catch (_) {}
+        }
+
+        function relative(ts) {
+          const delta = Math.max(0, Date.now() - ts);
+          const s = Math.floor(delta / 1000);
+          if (s < 60) return s + 's ago';
+          const m = Math.floor(s / 60);
+          if (m < 60) return m + 'm ago';
+          const h = Math.floor(m / 60);
+          if (h < 24) return h + 'h ago';
+          const d = Math.floor(h / 24);
+          return d + 'd ago';
+        }
+
+        function navigate(url) {
+          try {
+            window.parent.postMessage({ type: 'bread:navigate', value: url }, location.origin);
+          } catch (_) {}
+        }
+
+        function renderHistory() {
+          const list = document.getElementById('historyList');
+          if (!list) return;
+          const items = loadHistory();
+          if (!items.length) {
+            list.innerHTML =
+              '<div class="hint">No history yet. Open a site and it will show up here.</div>';
+            return;
+          }
+
+          list.innerHTML = items
+            .map((it) => {
+              const title = (it.title || it.host || it.url || '').toString();
+              const host = (it.host || '').toString();
+              const url = (it.url || '').toString();
+              const when = typeof it.ts === 'number' ? relative(it.ts) : '';
+              const sub = host + (when ? ' — ' + when : '');
+              return (
+                '<button type="button" class="history-item" data-nav="' +
+                encodeURIComponent(url) +
+                '">' +
+                '<div class="history-item-title">' +
+                escapeHtml(title) +
+                '</div>' +
+                '<div class="history-item-sub">' +
+                escapeHtml(sub) +
+                '</div>' +
+                '</button>'
+              );
+            })
+            .join('');
+
+          list.querySelectorAll('[data-nav]').forEach((btn) => {
+            btn.addEventListener('click', () => {
+              const url = decodeURIComponent(btn.getAttribute('data-nav') || '');
+              if (url) navigate(url);
+            });
+          });
+        }
+
+        const clearBtn = document.getElementById('clearHistoryBtn');
+        if (clearBtn) {
+          clearBtn.addEventListener('click', () => {
+            saveHistory([]);
+            renderHistory();
+          });
+        }
+
+        try {
+          const ipHint = document.getElementById('ipHint');
+          const host = location.hostname;
+          if (ipHint && (host === 'localhost' || host === '127.0.0.1' || host === '0.0.0.0')) {
+            ipHint.textContent =
+              "Localhost note: if your Bare server is also local, sites will see your normal IP. " +
+              "To change the egress IP, set BREAD's BARE_URL to a remote Bare server.";
+          }
+        } catch (_) {}
+
+        renderHistory();
+      })();
+    </script>
+  </body>
+</html>

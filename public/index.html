@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BREAD</title>
+  <link rel="stylesheet" href="/css/style.css?v=2026-02-06-6">
+  
+</head>
+<body class="bread-app">
+  <header class="top-bar" role="banner">
+    <a href="/" class="logo">BREAD</a>
+    <nav class="nav-links" aria-label="Main">
+      <a href="#" id="linkHome" aria-current="page">Home</a>
+      <a href="/updates" id="linkUpdates">Update logs</a>
+    </nav>
+  </header>
+
+  <!-- Offline message -->
+  <div class="offline-banner hidden" id="offlineBanner">YOU'RE OFFLINE</div>
+
+  <!-- Home view: hero + Start Browsing only -->
+  <section class="bread-home-view" id="homeView">
+    <div class="home-backdrop" id="homeBackdrop">
+      <div class="bread-hero">
+        <span class="bread-hero-emoji left" aria-hidden="true">&#x1F35E;</span>
+        <span class="bread-hero-emoji right" aria-hidden="true">&#x1F35E;</span>
+        <h1>BREAD</h1>
+      </div>
+      <p class="bread-tagline" id="breadTagline">Chrome-like tabs. Bread-themed. Steroid-powered browsing.</p>
+      <div class="home-features" aria-label="Highlights">
+        <span class="feature-pill">Tabs</span>
+        <span class="feature-pill">Search</span>
+        <span class="feature-pill">Device keys</span>
+        <span class="feature-pill">Scramjet</span>
+      </div>
+    </div>
+    <button type="button" class="btn-start-browsing" id="btnStartBrowsing" disabled>Start Browsing</button>
+    <div class="home-help">
+      <a href="/reset" class="home-help-link" title="Fix stuck cache / service worker">Having trouble? Reset proxy</a>
+    </div>
+  </section>
+
+  <!-- Key + storage card overlay (only when key required) -->
+  <div class="key-and-storage-card-overlay hidden" id="keyOverlay">
+    <div class="key-and-storage-card">
+      <div class="key-input-section">
+        <p class="key-input-label">Enter your key to unlock this device.</p>
+        <form class="lock-form" id="lockForm">
+          <input type="text" id="keyInput" placeholder="Key" autocomplete="off" required>
+          <button type="submit">Unlock</button>
+          <div class="error" id="lockError" aria-live="polite"></div>
+        </form>
+      </div>
+      <p class="storage-note-text">
+        Keys are stored on this server. Any site using this same server (e.g. 3239fhgergber.cloudfront.net or fghfjgjrth.github.dev) shares the same keys, expiration, and bindings.
+      </p>
+    </div>
+  </div>
+
+  <!-- Error log console (easter egg: e, l, g, 1 then = to close) -->
+  <div class="error-log-console" id="errorLogConsole">
+    <div class="error-log-header"><strong>Error log</strong> &mdash; Press <kbd>=</kbd> to close</div>
+    <div class="error-log-body" id="errorLogBody"></div>
+    <div class="error-log-footer">BREAD &mdash; Debug view</div>
+  </div>
+
+  <script src="/js/auth.js?v=2026-02-06-6"></script>
+  <script src="/js/keybinds.js?v=2026-02-06-6"></script>
+  <script src="/js/error-console.js?v=2026-02-06-6"></script>
+  <script src="/js/app.js?v=2026-02-06-6"></script>
+</body>
+</html>

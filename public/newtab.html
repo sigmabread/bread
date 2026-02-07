@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>New Tab - BREAD</title>
+  <link rel="stylesheet" href="/css/style.css?v=2026-02-06-6">
+</head>
+<body class="bread-app newtab-page">
+  <main class="newtab">
+    <div class="newtab-card">
+      <div class="newtab-brand">
+        <span class="newtab-mark" aria-hidden="true"></span>
+        <div>
+          <div class="newtab-title">BREAD</div>
+          <div class="newtab-subtitle">Bread, but on steroids.</div>
+        </div>
+      </div>
+
+      <form class="newtab-search" id="newtabSearch">
+        <input id="newtabInput" type="text" placeholder="Search or enter a URL" autocomplete="off" spellcheck="false">
+        <button type="submit">Go</button>
+      </form>
+
+      <div class="newtab-quick">
+        <button type="button" class="chip" data-url="https://duckduckgo.com/">DuckDuckGo</button>
+        <button type="button" class="chip" data-url="https://google.com/">Google</button>
+        <button type="button" class="chip" data-url="https://youtube.com/">YouTube</button>
+        <button type="button" class="chip" data-url="https://github.com/">GitHub</button>
+        <button type="button" class="chip" data-url="https://api.ipify.org/">What's my IP?</button>
+      </div>
+
+      <p class="newtab-hint" id="ipHint">
+        Tip: If "What's my IP?" shows your server's IP, you're proxied. If it shows your own, you're not.
+      </p>
+
+      <section class="newtab-history" aria-label="History">
+        <div class="newtab-history-header">
+          <h2>History</h2>
+          <button type="button" class="chip chip-muted" id="clearHistoryBtn">Clear</button>
+        </div>
+        <div class="newtab-history-list" id="historyList">
+          <div class="newtab-history-empty">No history yet.</div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    (function () {
+      const form = document.getElementById('newtabSearch');
+      const input = document.getElementById('newtabInput');
+      const ipHint = document.getElementById('ipHint');
+
+      function escapeHtml(s) {
+        const div = document.createElement('div');
+        div.textContent = s;
+        return div.innerHTML;
+      }
+
+      function navigate(value) {
+        parent.postMessage({ type: 'bread:navigate', value }, location.origin);
+      }
+
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const v = (input.value || '').trim();
+        if (v) navigate(v);
+      });
+
+      document.querySelectorAll('[data-url]').forEach((btn) => {
+        btn.addEventListener('click', () => navigate(btn.dataset.url));
+      });
+
+      function relative(ts) {
+        const ms = Date.now() - ts;
+        const s = Math.floor(ms / 1000);
+        if (s < 5) return 'just now';
+        const m = Math.floor(s / 60);
+        if (m < 60) return `${m}m ago`;
+        const h = Math.floor(m / 60);
+        if (h < 48) return `${h}h ago`;
+        const d = Math.floor(h / 24);
+        return `${d}d ago`;
+      }
+
+      function getDeviceId() {
+        try { return localStorage.getItem('bread_device_id') || 'anon'; } catch (_) { return 'anon'; }
+      }
+
+      function loadHistory() {
+        try {
+          const raw = localStorage.getItem('bread_history_' + getDeviceId());
+          const parsed = raw ? JSON.parse(raw) : [];
+          return Array.isArray(parsed) ? parsed : [];
+        } catch (_) {
+          return [];
+        }
+      }
+
+      function saveHistory(items) {
+        try { localStorage.setItem('bread_history_' + getDeviceId(), JSON.stringify(items)); } catch (_) {}
+      }
+
+      function renderHistory() {
+        const list = document.getElementById('historyList');
+        if (!list) return;
+        const items = loadHistory().slice(0, 12);
+        if (!items.length) {
+          list.innerHTML = '<div class="newtab-history-empty">No history yet.</div>';
+          return;
+        }
+        list.innerHTML = items
+          .map((it) => {
+            const title = (it.title || it.host || it.url || '').toString();
+            const host = (it.host || '').toString();
+            const url = (it.url || '').toString();
+            const when = typeof it.ts === 'number' ? relative(it.ts) : '';
+            const sub = host + (when ? ' - ' + when : '');
+            return `
+              <button type="button" class="history-item" data-nav="${encodeURIComponent(url)}">
+                <div class="history-item-title">${escapeHtml(title)}</div>
+                <div class="history-item-sub">${escapeHtml(sub)}</div>
+              </button>
+            `;
+          })
+          .join('');
+
+        list.querySelectorAll('[data-nav]').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            const url = decodeURIComponent(btn.getAttribute('data-nav') || '');
+            if (url) navigate(url);
+          });
+        });
+      }
+
+      const clearBtn = document.getElementById('clearHistoryBtn');
+      if (clearBtn) {
+        clearBtn.addEventListener('click', () => {
+          saveHistory([]);
+          renderHistory();
+        });
+      }
+
+      try {
+        const host = location.hostname;
+        if (ipHint && (host === 'localhost' || host === '127.0.0.1' || host === '0.0.0.0')) {
+          ipHint.textContent =
+            "Note: you're running BREAD on your own machine, so sites will still see your IP. " +
+            'To change egress IP, host this proxy on a remote server or chain an upstream proxy.';
+        }
+      } catch (_) {}
+
+      renderHistory();
+    })();
+  </script>
+</body>
+</html>

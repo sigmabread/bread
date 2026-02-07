@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Proxy - BREAD</title>
+  <link rel="stylesheet" href="/css/style.css?v=2026-02-06-6">
+</head>
+<body class="bread-app">
+  <header class="top-bar" role="banner">
+    <a href="/" class="logo">BREAD</a>
+    <nav class="nav-links" aria-label="Main">
+      <a href="/" id="linkHome">Home</a>
+      <a href="/updates" id="linkUpdates">Update logs</a>
+    </nav>
+  </header>
+
+  <div class="offline-banner hidden" id="offlineBanner">YOU'RE OFFLINE</div>
+
+  <!-- Key + storage card overlay (only when key required) -->
+  <div class="key-and-storage-card-overlay hidden" id="keyOverlay">
+    <div class="key-and-storage-card">
+      <div class="key-input-section">
+        <p class="key-input-label">Enter your key to unlock this device.</p>
+        <form class="lock-form" id="lockForm">
+          <input type="text" id="keyInput" placeholder="Key" autocomplete="off" required>
+          <button type="submit">Unlock</button>
+          <div class="error" id="lockError" aria-live="polite"></div>
+        </form>
+      </div>
+      <p class="storage-note-text">
+        Keys are stored on this server. Any site using this same server shares the same keys, expiration, and bindings.
+      </p>
+    </div>
+  </div>
+
+  <!-- Proxy UI -->
+  <main class="proxy-app hidden" id="proxyApp">
+    <div class="proxy-shell" role="application" aria-label="Proxy browser">
+      <div class="proxy-tabs-row">
+        <div class="proxy-tabs" id="proxyTabs" role="tablist" aria-label="Tabs"></div>
+        <button type="button" class="proxy-tab-add" id="btnNewTab" title="New tab" aria-label="New tab">+</button>
+        <div class="proxy-status" id="proxyStatus" title="Proxy status">
+          <span class="proxy-status-dot" id="proxyStatusDot" aria-hidden="true"></span>
+          <span class="proxy-status-text" id="proxyStatusText">Proxy</span>
+          <span class="proxy-status-sub" id="proxyStatusSub"></span>
+        </div>
+      </div>
+
+      <div class="proxy-toolbar" role="toolbar" aria-label="Navigation">
+        <div class="proxy-nav-group" aria-label="Navigation buttons">
+          <button type="button" class="nav-btn" id="btnBack" title="Back" aria-label="Back" disabled>&#8592;</button>
+          <button type="button" class="nav-btn" id="btnFwd" title="Forward" aria-label="Forward" disabled>&#8594;</button>
+          <button type="button" class="nav-btn" id="btnReload" title="Reload" aria-label="Reload">&#8635;</button>
+          <button type="button" class="nav-btn" id="btnFullscreen" title="Fullscreen" aria-label="Fullscreen">&#x26F6;</button>
+          <button type="button" class="nav-btn nav-btn-code" id="btnEruda" title="Inject Eruda (devtools)" aria-label="Inject Eruda">&lt;/&gt;</button>
+        </div>
+
+        <div class="proxy-omnibox" role="group" aria-label="Address bar">
+          <span class="proxy-omnibox-icon" id="proxyOmniboxIcon" aria-hidden="true">&#x1F6E1;</span>
+          <input type="text" id="urlInput" placeholder="Enter URL or search..." spellcheck="false" enterkeyhint="go" autocomplete="off">
+        </div>
+
+        <button type="button" class="go-btn" id="btnGo">Go</button>
+      </div>
+    </div>
+
+    <div class="proxy-frame-wrap">
+      <div class="proxy-loading hidden" id="proxyLoading" aria-live="polite">Loading&hellip;</div>
+    </div>
+  </main>
+
+  <!-- Error log console (easter egg: e, l, g, 1 then = to close) -->
+  <div class="error-log-console" id="errorLogConsole">
+    <div class="error-log-header"><strong>Error log</strong> &mdash; Press <kbd>=</kbd> to close</div>
+    <div class="error-log-body" id="errorLogBody"></div>
+    <div class="error-log-footer">BREAD &mdash; Debug view</div>
+  </div>
+
+  <script src="/uv/uv.bundle.js?v=2026-02-06-6"></script>
+  <script src="/uv/uv.config.js?v=2026-02-06-6"></script>
+
+  <script src="/scramjet/scramjet.codecs.js?v=2026-02-06-6"></script>
+  <script src="/scramjet.config.js?v=2026-02-06-6"></script>
+  <script src="/scramjet/scramjet.bundle.js?v=2026-02-06-6"></script>
+
+  <script src="/js/auth.js?v=2026-02-06-6"></script>
+  <script src="/js/proxy-ui.js?v=2026-02-06-6"></script>
+  <script src="/js/keybinds.js?v=2026-02-06-6"></script>
+  <script src="/js/error-console.js?v=2026-02-06-6"></script>
+  <script src="/js/app.js?v=2026-02-06-6"></script>
+</body>
+</html>

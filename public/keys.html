@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Keys &ndash; BREAD</title>
+  <link rel="stylesheet" href="/css/style.css?v=2026-02-06-6">
+  
+</head>
+<body class="keys-page bread-app">
+  <header class="top-bar" role="banner">
+    <a href="/" class="logo">BREAD</a>
+    <nav class="nav-links" aria-label="Main">
+      <a href="/">Home</a>
+      <a href="/updates">Update logs</a>
+    </nav>
+  </header>
+
+  <main class="keys-main">
+    <header class="page-hero">
+      <h1>Keys</h1>
+      <p class="keys-intro">Create device keys with real expirations. Expired keys stop working automatically.</p>
+    </header>
+
+    <section class="passcode-gate" id="passcodeGate">
+      <label for="passcodeInput">Passcode</label>
+      <input type="password" id="passcodeInput" placeholder="Enter passcode" autocomplete="off">
+      <button type="button" id="passcodeBtn">Continue</button>
+      <div class="error" id="passcodeError" aria-live="polite"></div>
+    </section>
+
+    <section class="keys-panel" id="keysPanel">
+    <h2>Create key</h2>
+    <form class="create-key-form" id="createKeyForm">
+      <h3>New key (key is auto-generated)</h3>
+      <div class="row">
+        <div>
+          <label for="keyName">Name</label>
+          <input type="text" id="keyName" placeholder="e.g. Device 1">
+        </div>
+        <div>
+          <label for="keyExpiration">Expiration</label>
+          <select id="keyExpiration">
+            <option value="24h">24h</option>
+            <option value="3d">3d</option>
+            <option value="7d">7d</option>
+            <option value="1m">1m</option>
+            <option value="2m">2m</option>
+            <option value="3m">3m</option>
+            <option value="6m">6m</option>
+            <option value="custom">Custom</option>
+            <option value="forever">forever</option>
+          </select>
+        </div>
+        <div id="customExpirationWrap" class="custom-expiration-wrap hidden">
+          <label for="customExpiration">Custom (e.g. 1s, 3s, 2.23m, 1.5h)</label>
+          <input type="text" id="customExpiration" placeholder="2.23m">
+        </div>
+        <div>
+          <button type="submit">Generate key</button>
+        </div>
+      </div>
+    </form>
+
+    <h2>Keys</h2>
+    <p class="keys-table-hint">Hidden keys are removed from the list for all users. Expired keys are hidden by default; use the toggle below to show them.</p>
+    <label class="show-hidden-wrap">
+      <input type="checkbox" id="showHiddenKeys"> Show hidden keys (removed from list for all users)
+    </label>
+    <label class="show-hidden-wrap">
+      <input type="checkbox" id="showExpiredKeys"> Show expired keys
+    </label>
+    <div class="keys-table-wrap">
+      <table class="keys-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Key</th>
+            <th>Expiration</th>
+            <th>Status</th>
+            <th>Bound to (device id)</th>
+            <th>Bound at</th>
+            <th>User agent</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="keysTableBody"></tbody>
+      </table>
+    </div>
+    </section>
+  </main>
+
+  <div class="key-reveal-overlay hidden" id="keyRevealOverlay">
+    <div class="key-reveal-modal">
+      <h3>Your key (copy now)</h3>
+      <div class="key-reveal-value-wrap">
+        <code id="keyRevealValue"></code>
+        <button type="button" class="key-reveal-copy" id="keyRevealCopy">Copy</button>
+      </div>
+      <p class="key-reveal-hint">Give this key to the user. They enter it once on the home page to unlock their device.</p>
+      <button type="button" class="key-reveal-done" id="keyRevealDone">Done</button>
+    </div>
+  </div>
+
+  <div class="revoke-modal-overlay hidden" id="revokeModalOverlay">
+    <div class="revoke-modal">
+      <h3>Expire this key now?</h3>
+      <p>Enter the revoke secret to confirm. The device using this key will be locked immediately.</p>
+      <input type="password" id="revokeSecretInput" placeholder="Revoke secret" autocomplete="off">
+      <div class="revoke-modal-actions">
+        <button type="button" class="revoke-cancel" id="revokeCancel">Cancel</button>
+        <button type="button" class="revoke-confirm" id="revokeConfirm">Expire now</button>
+      </div>
+      <div class="error" id="revokeError"></div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const passcodeGate = document.getElementById('passcodeGate');
+      const keysPanel = document.getElementById('keysPanel');
+      const passcodeInput = document.getElementById('passcodeInput');
+      const passcodeBtn = document.getElementById('passcodeBtn');
+      const passcodeError = document.getElementById('passcodeError');
+      const createKeyForm = document.getElementById('createKeyForm');
+      const keyName = document.getElementById('keyName');
+      const keyExpiration = document.getElementById('keyExpiration');
+      const keysTableBody = document.getElementById('keysTableBody');
+      const keyRevealOverlay = document.getElementById('keyRevealOverlay');
+      const keyRevealValue = document.getElementById('keyRevealValue');
+      const keyRevealCopy = document.getElementById('keyRevealCopy');
+      const keyRevealDone = document.getElementById('keyRevealDone');
+      const revokeModalOverlay = document.getElementById('revokeModalOverlay');
+      const revokeSecretInput = document.getElementById('revokeSecretInput');
+      const revokeCancel = document.getElementById('revokeCancel');
+      const revokeConfirm = document.getElementById('revokeConfirm');
+      const revokeError = document.getElementById('revokeError');
+
+      let revokeKeyId = null;
+
+      function getOrigin() {
+        return location.origin;
+      }
+
+      async function verifyPasscode() {
+        const passcode = passcodeInput.value.trim();
+        const res = await fetch(getOrigin() + '/api/keys/verify-passcode', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ passcode }),
+          credentials: 'include',
+        });
+        const data = await res.json();
+        if (data.ok) {
+          passcodeGate.style.display = 'none';
+          keysPanel.classList.add('visible');
+          loadKeys();
+        } else {
+          passcodeError.textContent = 'Invalid passcode.';
+        }
+      }
+
+      passcodeBtn.addEventListener('click', () => verifyPasscode());
+      passcodeInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') verifyPasscode();
+      });
+
+      function showKeyReveal(keyStr) {
+        keyRevealValue.textContent = keyStr;
+        keyRevealOverlay.classList.remove('hidden');
+      }
+
+      keyRevealCopy.addEventListener('click', () => {
+        const v = keyRevealValue.textContent;
+        navigator.clipboard.writeText(v).then(() => {
+          keyRevealCopy.textContent = 'Copied!';
+          setTimeout(() => { keyRevealCopy.textContent = 'Copy'; }, 2000);
+        });
+      });
+
+      keyRevealDone.addEventListener('click', () => {
+        keyRevealOverlay.classList.add('hidden');
+      });
+
+      function openRevokeModal(keyId) {
+        revokeKeyId = keyId;
+        revokeSecretInput.value = '';
+        revokeError.textContent = '';
+        revokeModalOverlay.classList.remove('hidden');
+      }
+
+      function closeRevokeModal() {
+        revokeKeyId = null;
+        revokeModalOverlay.classList.add('hidden');
+      }
+
+      revokeCancel.addEventListener('click', closeRevokeModal);
+      revokeConfirm.addEventListener('click', async () => {
+        const secret = revokeSecretInput.value.trim();
+        if (!secret || !revokeKeyId) return;
+        revokeError.textContent = '';
+        try {
+          const res = await fetch(getOrigin() + '/api/keys/revoke', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ keyId: revokeKeyId, secret }),
+            credentials: 'include',
+          });
+          const data = await res.json();
+          if (data.ok) {
+            closeRevokeModal();
+            loadKeys();
+          } else {
+            revokeError.textContent = data.reason === 'invalid_revoke_secret' ? 'Wrong revoke secret.' : 'Failed.';
+          }
+        } catch (_) {
+          revokeError.textContent = 'Network error.';
+        }
+      });
+
+      const showHiddenKeys = document.getElementById('showHiddenKeys');
+      const showExpiredKeys = document.getElementById('showExpiredKeys');
+      const keyExpirationSelect = document.getElementById('keyExpiration');
+      const customExpirationWrap = document.getElementById('customExpirationWrap');
+      const customExpirationInput = document.getElementById('customExpiration');
+
+      keyExpirationSelect.addEventListener('change', () => {
+        customExpirationWrap.classList.toggle('hidden', keyExpirationSelect.value !== 'custom');
+      });
+
+      showHiddenKeys.addEventListener('change', () => loadKeys());
+      showExpiredKeys.addEventListener('change', () => loadKeys());
+
+      async function loadKeys() {
+        const includeHidden = showHiddenKeys.checked;
+        const includeExpired = showExpiredKeys.checked;
+        const params = new URLSearchParams();
+        if (includeHidden) params.set('hidden', '1');
+        if (includeExpired) params.set('expired', '1');
+        const url = getOrigin() + '/api/keys/list' + (params.toString() ? '?' + params.toString() : '');
+        const res = await fetch(url, { credentials: 'include' });
+        if (!res.ok) {
+          keysPanel.classList.remove('visible');
+          passcodeGate.style.display = 'block';
+          return;
+        }
+        const data = await res.json();
+        if (!data.keys || !data.keys.length) {
+          keysTableBody.innerHTML = '<tr><td colspan="8">No keys yet. Create one above.</td></tr>';
+          return;
+        }
+
+        function formatRelative(ms) {
+          const abs = Math.abs(ms);
+          const s = Math.floor(abs / 1000);
+          if (s < 5) return ms >= 0 ? 'in a moment' : 'just now';
+          const m = Math.floor(s / 60);
+          const h = Math.floor(m / 60);
+          const d = Math.floor(h / 24);
+
+          let out = '';
+          if (d > 0) out += d + 'd ';
+          if (h % 24 > 0 && d < 7) out += (h % 24) + 'h ';
+          if (m % 60 > 0 && d === 0) out += (m % 60) + 'm ';
+          out = out.trim();
+          return ms >= 0 ? ('in ' + out) : (out + ' ago');
+        }
+
+        function badge(kind, text) {
+          return `<span class="badge badge-${escapeHtml(kind)}">${escapeHtml(text)}</span>`;
+        }
+
+        keysTableBody.innerHTML = data.keys.map(k => {
+          const expired = k.expiresAt != null && Date.now() > k.expiresAt;
+          const expDateStr = k.expiresAt ? new Date(k.expiresAt).toLocaleString() : null;
+          const status = expired
+            ? badge('danger', 'Expired')
+            : (k.boundDeviceId ? badge('good', 'Bound') : badge('muted', 'Unused'));
+          const expStr = k.expiresAt
+            ? `<div class="exp-cell">
+                 <div class="exp-date">${escapeHtml(expDateStr)}</div>
+                 <div class="exp-rel ${expired ? 'is-expired' : ''}">${escapeHtml(formatRelative(k.expiresAt - Date.now()))}</div>
+               </div>`
+            : `<div class="exp-cell"><div class="exp-date">Forever</div><div class="exp-rel">—</div></div>`;
+          const boundId = k.boundDeviceId ? escapeHtml(String(k.boundDeviceId).slice(0, 24)) + (k.boundDeviceId.length > 24 ? '…' : '') : '—';
+          const boundAtStr = k.boundAt ? new Date(k.boundAt).toLocaleString() : '—';
+          const ua = (k.boundUserAgent || '').slice(0, 40);
+          const uaStr = ua ? escapeHtml(ua) + (k.boundUserAgent.length > 40 ? '…' : '') : '—';
+          const revokeBtn = expired ? '' : `<button type="button" class="btn-revoke" data-key-id="${escapeHtml(k.id)}">Expire now</button>`;
+          const removeBtn = `<button type="button" class="btn-remove" data-key-id="${escapeHtml(k.id)}" title="Hide from page for all users">Hide from page</button>`;
+          return `<tr>
+            <td>${escapeHtml(k.name)}</td>
+            <td><code>${escapeHtml(k.key)}</code></td>
+            <td>${expStr}</td>
+            <td>${status}</td>
+            <td><code class="bound-id">${boundId}</code></td>
+            <td>${boundAtStr}</td>
+            <td title="${escapeHtml(k.boundUserAgent || '')}"><span class="ua-cell">${uaStr}</span></td>
+            <td class="keys-actions">${revokeBtn} ${removeBtn}</td>
+          </tr>`;
+        }).join('');
+        keysTableBody.querySelectorAll('.btn-revoke').forEach(btn => {
+          btn.addEventListener('click', () => openRevokeModal(btn.dataset.keyId));
+        });
+        keysTableBody.querySelectorAll('.btn-remove').forEach(btn => {
+          btn.addEventListener('click', async () => {
+            if (!confirm('Hide this key from the list for all users? It will stay in the database but no longer show on the keys page.')) return;
+            const id = btn.dataset.keyId;
+            const r = await fetch(getOrigin() + '/api/keys/hide', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ keyId: id }),
+              credentials: 'include',
+            });
+            const d = await r.json();
+            if (d.ok) loadKeys();
+          });
+        });
+      }
+
+      function escapeHtml(s) {
+        const div = document.createElement('div');
+        div.textContent = s;
+        return div.innerHTML;
+      }
+
+      createKeyForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const name = keyName.value.trim() || 'Unnamed';
+        let expiration = keyExpirationSelect.value;
+        if (expiration === 'custom') expiration = customExpirationInput.value.trim() || '1h';
+        try {
+          const res = await fetch(getOrigin() + '/api/keys/create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, expiration }),
+            credentials: 'include',
+          });
+          const data = await res.json();
+          if (data.ok) {
+            loadKeys();
+            showKeyReveal(data.key.key);
+          } else {
+            alert(data.reason || 'Failed to create key.');
+          }
+        } catch (_) {
+          alert('Network error.');
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

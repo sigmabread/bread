@@ -1,0 +1,26 @@
+{
+  "name": "bread-proxy",
+  "version": "1.0.0",
+  "description": "BREADroids - professional modular web proxy",
+  "type": "module",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "@mercuryworkshop/bare-as-module3": "^2.2.5",
+    "@mercuryworkshop/bare-mux": "^2.1.8",
+    "@mercuryworkshop/scramjet": "^1.0.2",
+    "@titaniumnetwork-dev/ultraviolet": "^3.2.10",
+    "@tomphttp/bare-client": "^2.1.0",
+    "@tomphttp/bare-server-node": "^2.0.5",
+    "bare-server-node": "^2.0.3",
+    "cookie-parser": "^1.4.6",
+    "express": "^4.21.0",
+    "express-session": "^1.18.0"
+  }
+}

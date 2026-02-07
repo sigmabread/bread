@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Update logs &ndash; BREAD</title>
+  <link rel="stylesheet" href="/css/style.css?v=2026-02-06-6">
+</head>
+<body class="updates-page bread-app">
+  <header class="top-bar updates-header" role="banner">
+    <a href="/" class="logo">BREAD</a>
+    <nav class="nav-links" aria-label="Main">
+      <a href="/">Home</a>
+      <a href="/updates" aria-current="page">Update logs</a>
+    </nav>
+  </header>
+
+  <main class="updates-main">
+    <header class="page-hero">
+      <h1>Update logs</h1>
+      <p class="updates-intro">Product + proxy UI updates. (No secrets or access-control details here.)</p>
+    </header>
+
+    <section class="updates-grid" aria-label="Updates">
+      <article class="update-card">
+        <div class="update-meta">
+          <time datetime="2025-02-04">2025-02-04</time>
+          <span class="badge badge-good">UI</span>
+        </div>
+        <h3>Offline banner</h3>
+        <p>When you have no connection, the app shows &ldquo;YOU&#8217;RE OFFLINE&rdquo; so the page stays usable.</p>
+      </article>
+
+      <article class="update-card">
+        <div class="update-meta">
+          <time datetime="2025-02-03">2025-02-03</time>
+          <span class="badge badge-muted">Proxy</span>
+        </div>
+        <h3>HTML &amp; CSS rewriting</h3>
+        <p>Links and CSS <code>url()</code> are rewritten so navigation and assets stay behind the proxy.</p>
+      </article>
+
+      <article class="update-card">
+        <div class="update-meta">
+          <time datetime="2025-02-03">2025-02-03</time>
+          <span class="badge badge-muted">Proxy</span>
+        </div>
+        <h3>Redirect rewriting</h3>
+        <p>Upstream redirects are rewritten so follow-up requests stay proxied.</p>
+      </article>
+
+      <article class="update-card">
+        <div class="update-meta">
+          <time datetime="2025-02-01">2025-02-01</time>
+          <span class="badge badge-good">UI</span>
+        </div>
+        <h3>Tabs + toolbar</h3>
+        <p>URL bar, back/forward/reload, and multiple tabs&mdash;closer to a Chrome-like feel.</p>
+      </article>
+    </section>
+  </main>
+</body>
+</html>
